@@ -1,0 +1,16 @@
+name: release
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release-please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: go
+          default-branch: main

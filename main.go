@@ -138,7 +138,18 @@ func main() {
 	isRedirect := flag.Bool("r", false, "disable redirect (`bool`: default is false)")
 	interval := flag.Float64("i", 1.0, "seconds between sending each httping request")
 	skipVerify := flag.Bool("k", false, "skip SSL/TLS insecure verity (`bool`: default is false)")
+
 	flag.Parse()
+
+	if flag.NFlag() == 0 {
+		flag.Usage()
+		return
+	}
+
+	if flag.NArg() > 0 {
+		flag.Usage()
+		return
+	}
 
 	s := NewStat(*count, *dest)
 

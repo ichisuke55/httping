@@ -34,24 +34,25 @@ func NewStat(count int, dest string) *Stat {
 }
 
 func (s *Stat) ping(ctx context.Context, wg *sync.WaitGroup, destination, method string, count int, interval float64, isRedirect, skipVerify bool) {
-	limit := time.Duration(count) * time.Duration(int(interval*1000)) * time.Millisecond
+	ticker := time.NewTicker(time.Duration(int(interval*1000)) * time.Millisecond)
 	client := &http.Client{
 		Timeout: time.Duration(10 * time.Second),
 	}
 
-	// custom redirect function handle
+	// set custom redirect function-handle
 	if isRedirect {
 		client.CheckRedirect = DisableRedirect
 	}
 
 	fmt.Printf("Destination is %s\n", destination)
 
-	for begin := time.Now(); time.Since(begin) < limit; {
+	defer wg.Done()
+	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
-			defer wg.Done()
+			ticker.Stop()
 			return
-		default:
+		case <-ticker.C:
 			tr := &CustomTransport{
 				dialer: &net.Dialer{
 					Timeout: 10 * time.Second,
@@ -102,11 +103,8 @@ func (s *Stat) ping(ctx context.Context, wg *sync.WaitGroup, destination, method
 			fmt.Printf("%d bytes from %s: Sequence: %d, StatusCode: %d, RTT: %dms\n", len(b), destination, s.counter, resp.StatusCode, tr.Duration().Milliseconds())
 
 			s.counter++
-			time.Sleep(time.Duration(int(interval*1000)) * time.Millisecond)
 		}
 	}
-
-	defer wg.Done()
 }
 
 var (
